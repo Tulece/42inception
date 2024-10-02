@@ -3,7 +3,7 @@ FROM debian:bullseye
 
 # Mettre à jour et installer PHP-FPM et extensions nécessaires
 RUN apt-get update && \
-    apt-get install -y php-fpm php-mysql && \
+    apt-get install -y wget php-fpm php-mysql && \
     rm -rf /var/lib/apt/lists/*
 
 # Configurer PHP-FPM
@@ -13,8 +13,9 @@ COPY www.conf /etc/php/7.4/fpm/pool.d/www.conf
 RUN mkdir -p /var/www/html /home/anporced/data/wordpress /run/php && \
     chown -R www-data:www-data /var/www/html /home/anporced/data/wordpress /run/php
 
-# Copier les fichiers WordPress
-COPY wordpress/ /var/www/html/
+    RUN wget https://wordpress.org/latest.tar.gz && \
+    tar -xzf latest.tar.gz --strip-components=1 -C /var/www/html && \
+    rm latest.tar.gz
 
 # Définir les permissions
 RUN chown -R www-data:www-data /var/www/html
