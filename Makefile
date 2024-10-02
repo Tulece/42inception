@@ -1,14 +1,38 @@
+# Variables
+DOCKER_COMPOSE = docker-compose
+DOCKER_COMPOSE_FILE = docker-compose.yml
+
+# Règles
 all: up
 
+# Build et démarre les services
 up:
-	docker-compose up -d --build
+	$(DOCKER_COMPOSE) up -d --build
 
+# Stop les services
 down:
-	docker-compose down
+	$(DOCKER_COMPOSE) down
 
-restart:
-	docker-compose restart
-
+# Supprime les conteneurs, volumes, et réseaux Docker
 clean:
-	docker-compose down -v --rmi all
-	docker system prune -f
+	$(DOCKER_COMPOSE) down --rmi all --volumes --remove-orphans
+
+# Rebuild à partir de zéro (sans utiliser le cache) et démarre les services
+rebuild:
+	$(DOCKER_COMPOSE) down --rmi all --volumes --remove-orphans
+	$(DOCKER_COMPOSE) build --no-cache
+	$(DOCKER_COMPOSE) up -d
+
+# Visualise les logs des conteneurs
+logs:
+	$(DOCKER_COMPOSE) logs -f
+
+# Restart les services
+restart:
+	$(DOCKER_COMPOSE) restart
+
+# Affiche l'état des services
+status:
+	$(DOCKER_COMPOSE) ps
+
+.PHONY: all up down clean rebuild logs restart status
