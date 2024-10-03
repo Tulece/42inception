@@ -1,38 +1,34 @@
-# Variables
-DOCKER_COMPOSE = docker-compose
-DOCKER_COMPOSE_FILE = docker-compose.yml
+USER=		anporced
+IMG_DIR=	Images
+DIR	=		srcs/docker-compose.yml
+VOL	=		/home/$(USER)/data
 
-# Règles
-all: up
+all:	run
 
-# Build et démarre les services
-up:
-	$(DOCKER_COMPOSE) up -d --build
+run	:
+	@mkdir -p /home/$(USER)/data
+	@mkdir -p /home/$(USER)/data/mariadb
+	@mkdir -p /home/$(USER)/data/wordpress
+	@mkdir -p $(IMG_DIR);
+	docker-compose -f $(DIR) up --build -d
+	@$(MAKE) save-images
+stop:
+	docker-compose -f $(DIR) down
 
-# Stop les services
-down:
-	$(DOCKER_COMPOSE) down
+kill:
+	docker-compose -f $(DIR) kill
 
-# Supprime les conteneurs, volumes, et réseaux Docker
-clean:
-	$(DOCKER_COMPOSE) down --rmi all --volumes --remove-orphans
+clean-all:
+	sudo docker system prune -a -f
+	@echo "Delete Docker images..."
+	@rm -rf $(IMG_DIR)/*;
 
-# Rebuild à partir de zéro (sans utiliser le cache) et démarre les services
-rebuild:
-	$(DOCKER_COMPOSE) down --rmi all --volumes --remove-orphans
-	$(DOCKER_COMPOSE) build --no-cache
-	$(DOCKER_COMPOSE) up -d
+fclean : clean-all
 
-# Visualise les logs des conteneurs
-logs:
-	$(DOCKER_COMPOSE) logs -f
+re: fclean run
 
-# Restart les services
-restart:
-	$(DOCKER_COMPOSE) restart
-
-# Affiche l'état des services
-status:
-	$(DOCKER_COMPOSE) ps
-
-.PHONY: all up down clean rebuild logs restart status
+save-images:
+	@echo "Saving Docker images..."
+	@docker save -o $(IMG_DIR)/wordpress.tar srcs_wordpress:latest
+	@docker save -o $(IMG_DIR)/nginx.tar srcs_nginx:latest
+	@docker save -o $(IMG_DIR)/mariadb.tar srcs_mariadb:latest

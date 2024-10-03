@@ -1,0 +1,152 @@
+version: '3.7'
+
+services:
+  mariadb:
+    container_name: mariadb
+    volumes:
+    - mariadb:/var/lib/mysql
+    ports:
+    - "3306:3306"
+    networks:
+    - docker-network
+    build:
+      context: requirements/mariadb
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    restart: always
+
+  
+  wordpress:
+    container_name: wordpress
+    volumes:
+      - wordpress:/var/www/html
+    ports:
+      - "9000:9000"
+    networks:
+      - docker-network
+    depends_on:
+      - mariadb
+    build:
+      context: requirements/wordpress
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    restart: on-failure
+
+
+  nginx:
+    container_name: nginx
+    volumes:
+      - wordpress:/var/www/html
+    ports:
+      - "443:443"
+    networks:
+      - docker-network
+    depends_on:
+      - wordpress
+    build:
+      context: requirements/nginx
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    restart: on-failure
+   
+  redis:
+    build:
+      context: ./requirements/redis
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - docker-network
+
+  ftp:
+    build:
+      context: ./requirements/ftp
+    container_name: ftp
+    restart: unless-stopped
+    ports:
+      - "21:21"
+      - "10000-10100:10000-10100"
+    volumes:
+      - ${WP_VOL_PATH}:/var/www/html
+    networks:
+      - docker-network
+
+  # hugo:
+  #   build:
+  #     context: ./requirements/hugo
+  #   container_name: hugo
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:80"
+  #   volumes:
+  #     - ./requirements/hugo/site:/var/www/hugo/
+  #   networks:
+  #     - docker-network
+
+  # adminer:
+  #   build:
+  #     context: ./requirements/adminer
+  #   container_name: adminer
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8081:80"
+  #   networks:
+  #     - docker-network
+
+  # prometheus:
+  #   build:
+  #     context: ./requirements/prometheus
+  #   container_name: prometheus
+  #   restart: unless-stopped
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - prometheus_data:/etc/prometheus
+  #   networks:
+  #     - docker-network
+
+  # cadvisor:
+  #   build:
+  #     context: ./requirements/cadvisor
+  #   container_name: cadvisor
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:8080"
+  #   volumes:
+  #     - /:/rootfs:ro
+  #     - /var/run:/var/run:ro
+  #     - /sys:/sys:ro
+  #     - /var/lib/docker/:/var/lib/docker:ro
+  #   networks:
+  #     - docker-network
+
+
+volumes:
+  wordpress:
+    driver: local
+    driver_opts:
+      type: 'none'
+      o: 'bind'
+      device: ${WP_VOL_PATH}
+  mariadb:
+     driver: local
+     driver_opts:
+      type: 'none' 
+      o: 'bind'
+      device: ${MDB_VOL_PATH}
+  redis_data:
+  prometheus_data:
+  grafana_data:
+  wordpress_data:
+  mariadb_data:
+
+    
+networks:
+  docker-network:
+    driver: bridge
