@@ -2,7 +2,7 @@ FROM debian:bullseye
 
 # Mettre à jour les dépôts et installer les paquets nécessaires
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
-    wget \
+    wget curl nano \
     php7.4-fpm \
     php7.4-mysql \
     php7.4-intl \
@@ -31,4 +31,7 @@ RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.ph
 
 # Rendre le script exécutable et définir la commande à exécuter
 RUN chmod +x /usr/local/bin/auto-config.sh
+
+RUN apt-get update && apt-get install -y sendmail
+
 CMD ["/usr/local/bin/auto-config.sh"]

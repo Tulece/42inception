@@ -1,9 +1,8 @@
 #!/bin/bash
 
-# Créer un utilisateur FTP
-useradd -m ftpuser -p $(openssl passwd -1 ftppassword) -s /bin/bash
-mkdir -p /var/www/html
-chown -R ftpuser:ftpuser /var/www/html
+# Crée l'utilisateur ftp (par exemple, wordpress)
+useradd -m wordpress
+echo "wordpress:password" | chpasswd
 
-# Démarrer vsftpd
-/usr/sbin/vsftpd /etc/vsftpd.conf
+# Crée le fichier d'autorisation d'utilisateur pour vsftpd
+echo "wordpress" > /etc/vsftpd.userlist

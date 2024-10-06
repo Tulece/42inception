@@ -1,23 +1,21 @@
 FROM debian:bullseye
 
-# Mettre à jour les dépôts et installer Apache et PHP
+# Installer Apache et PHP
 RUN apt-get update && \
-    apt-get install -y apache2 php libapache2-mod-php && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y apache2 php php-mbstring php-xml php-curl php-zip php-mysql wget && \
+    apt-get clean
 
 # Télécharger Adminer
-RUN mkdir /var/www/html/adminer && \
-    curl -L https://www.adminer.org/latest.php -o /var/www/html/adminer/index.php
+RUN wget "https://github.com/vrana/adminer/releases/download/v4.8.1/adminer-4.8.1.php" -O /var/www/html/adminer.php
 
-# Configurer Apache
-COPY conf/apache.conf /etc/apache2/sites-available/000-default.conf
+# Configurer Apache pour écouter sur le port 8080 et servir Adminer
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf && \
+    sed -i 's/Listen 80/Listen 8080/' /etc/apache2/ports.conf && \
+    sed -i 's/:80>/:8080>/' /etc/apache2/sites-available/000-default.conf && \
+    a2enmod rewrite
 
 # Exposer le port 8080
-EXPOSE 80
+EXPOSE 8080
 
-# Activer les modules nécessaires et démarrer Apache
-RUN a2enmod rewrite && \
-    service apache2 restart
-
-CMD ["apache2ctl", "-D", "FOREGROUND"]
+# Lancer Apache en mode premier plan
+CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]

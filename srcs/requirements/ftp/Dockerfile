@@ -1,20 +1,17 @@
+# srcs/requirements/ftp/Dockerfile
 FROM debian:bullseye
 
-# Mettre à jour les dépôts et installer vsftpd
 RUN apt-get update && \
     apt-get install -y vsftpd && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get clean
 
-# Copier le fichier de configuration vsftpd
+# Créer le répertoire chroot manquant
+RUN mkdir -p /var/run/vsftpd/empty
+
+# Copier la configuration vsftpd
 COPY conf/vsftpd.conf /etc/vsftpd.conf
 
-# Ajouter les scripts d'initialisation si nécessaire
-COPY tool/ftp_init.sh /usr/local/bin/ftp_init.sh
-RUN chmod +x /usr/local/bin/ftp_init.sh
+# Créer la liste des utilisateurs FTP
+RUN echo "wordpress" > /etc/vsftpd.userlist
 
-# Exposer le port FTP
-EXPOSE 21
-
-# Démarrer vsftpd
-CMD ["/usr/local/bin/ftp_init.sh"]
+CMD ["/usr/sbin/vsftpd", "/etc/vsftpd.conf"]
